@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdbool.h>
 enum direction{
 	up = 0,
 	right = 1,
@@ -11,13 +12,13 @@ enum tile_content{
 	food = 2
 };
 struct tile{
-	direction dr;
-	tile_content tl;
+	enum direction dr;
+	enum tile_content tl;
 };
 struct map{
 	int mapsizex;
 	int mapsizey;
-	tile ** tiles;
+	struct tile ** tiles;
 	int headx;
 	int heady;
 	int tailx;
