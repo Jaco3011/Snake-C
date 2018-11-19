@@ -1,0 +1,2 @@
+# Snake-C
+Projekt semestralny
