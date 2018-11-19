@@ -28,5 +28,5 @@ int main(){
 	while (main_loop){
 		
 	}
-	exit 0;
+	return 0;
 }
