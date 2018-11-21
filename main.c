@@ -31,8 +31,9 @@ struct map initmap(int x, int y, int l){
 	zerotile.dr=0 ;
 	zerotile.tl=0 ;
 	struct map output;
-	output.tiles=(struct tile**) calloc(x,y*sizeof(struct tile));
+	output.tiles=/*(struct tile**)*/ calloc(x,sizeof(struct tile*));
 	for (int i=0; i<x; i++){
+        output.tiles[i]=calloc(y,sizeof(struct tile));
 		for (int j=0; j<y; j++){
 			output.tiles[i][j]=zerotile ;
 		};
@@ -77,18 +78,52 @@ void decreasey(int* y, struct map*mapp){
         (*y)=(*mapp).mapsizex-1;
     };
 }
+bool tickle (struct map*mapp){
+    int xx=mapp->tailx;
+    int yy=mapp->taily;
+    if (mapp->tiles[xx][yy].tl==3){
+        mapp->tiles[xx][yy].tl=1;
+    } else {
+        mapp->tiles[xx][yy].tl=0;
+        switch (mapp->tiles[xx][yy].dr){
+            case 0: decreasey(&(mapp->taily),mapp); break;
+            case 1: increasex(&(mapp->tailx),mapp); break;
+            case 2: increasey(&(mapp->taily),mapp); break;
+            case 3: decreasex(&(mapp->tailx),mapp); break;
+        };
+    }
+    xx=mapp->headx;
+    yy=mapp->heady;
+    switch (mapp->tiles[xx][yy].dr){
+            case 0: decreasey(&yy,mapp); break;
+            case 1: increasex(&xx,mapp); break;
+            case 2: increasey(&yy,mapp); break;
+            case 3: decreasex(&xx,mapp); break;
+    };
+    return (mapp->tiles[xx][yy].tl!=1 && mapp->tiles[xx][yy].tl!=3);
+}
 int main(){
 	const int width = 78 ;
-	const int height = 22 ; //tymczasowo sta�e
+	const int height = 22 ; //tymczasowo stałe
 	const int initial_length = 3 ;
 	bool main_loop = true ;
 	bool run = false ;
 	struct map themap=initmap(width,height,initial_length);
 	while (main_loop){
-		//printf
-		printf("helloworld");
-		main_loop=false ;
+		if (run){
+            run=tickle(&themap);
+            //wyswietl
+            if(!run){
+            //!przegrałeś - komunikat
+            }
+		}else{
+            //!menu
+		}
+		main_loop=false ; //do usunięcia
 	}
-	free(themap.tiles);
+	for(int i=0; i<themap.mapsizex; i++){
+        free(themap.tiles[i]);
+    };
+    printf("THE END\n");
 	return 0;
 }
