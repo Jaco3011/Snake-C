@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <time.h>
+#include "ncurses.h"
 enum direction{
 	up = 0,
 	right = 1,
@@ -31,9 +33,11 @@ struct map initmap(int x, int y, int l){
 	zerotile.dr=0 ;
 	zerotile.tl=0 ;
 	struct map output;
-	output.tiles=/*(struct tile**)*/ calloc(x,sizeof(struct tile*));
+	output.tiles=(struct tile**) malloc(x*y*sizeof(struct tile*));
 	for (int i=0; i<x; i++){
-        output.tiles[i]=calloc(y,sizeof(struct tile));
+        output.tiles[i]=(struct tile*) malloc(y * sizeof(struct tile));
+	};
+	for (int i=0; i<x; i++){
 		for (int j=0; j<y; j++){
 			output.tiles[i][j]=zerotile ;
 		};
@@ -49,6 +53,9 @@ struct map initmap(int x, int y, int l){
 	output.tailx=output.headx+l-1;
 	output.taily=output.heady;
 	return output;
+}
+void chhead(struct map*mapp, enum direction d){
+mapp->tiles[mapp->headx][mapp->heady].dr=d;
 }
 void increasex(int* x, struct map*mapp){
     if((*x)<((*mapp).mapsizex-1)){
@@ -103,27 +110,70 @@ bool tickle (struct map*mapp){
     return (mapp->tiles[xx][yy].tl!=1 && mapp->tiles[xx][yy].tl!=3);
 }
 int main(){
-	const int width = 78 ;
-	const int height = 22 ; //tymczasowo stałe
+    raw();
+    initscr();
+    noecho();
+    keypad(stdscr, true);
+	int width = COLS ;
+	int height = LINES ;
 	const int initial_length = 3 ;
+	//const
 	bool main_loop = true ;
-	bool run = false ;
+	bool run = true;
+	time_t then=time(NULL);
+	const double tickle_interval=0.5 ;
 	struct map themap=initmap(width,height,initial_length);
+	char mychar;
+	enum direction nx ;
 	while (main_loop){
+        mychar=getch();
+        //! obsługa znaku wejścia
+        switch (mychar){
+            case 'w':
+            nx = up; break;
+            case 'a':
+            nx = left; break;
+            case 's':
+            nx = down; break;
+            case 'd':
+            nx = right; break;
+            default: //nic
+            ;
+        }
+        chhead(&themap, nx);
 		if (run){
-            run=tickle(&themap);
-            //wyswietl
-            if(!run){
-            //!przegrałeś - komunikat
+            if(difftime(time(NULL),then)>=tickle_interval){
+                then=time(NULL);
+                run=tickle(&themap);
+                for (int i=0; i<height;i++){
+                    for (int j=0;j<width;j++){
+                        switch (themap.tiles[i][j].tl){
+                        case 0: addch(' '); break;
+                        case 1:
+                        case 3:
+                            switch (themap.tiles[i][j].dr){
+                            case 0: addch('^'); break;
+                            case 1: addch('>'); break;
+                            case 2: addch('V'); break;
+                            case 3: addch('<');
+                            }
+                        break;
+                        case 2: addch('O'); break;
+                        }
+                    }
+                    addch('\n');
+                }
             }
 		}else{
             //!menu
 		}
-		main_loop=false ; //do usunięcia
+		//main_loop=false ; //!do usunięcia
+		refresh();
+		move(0,0);
 	}
 	for(int i=0; i<themap.mapsizex; i++){
         free(themap.tiles[i]);
     };
-    printf("THE END\n");
+    endwin();
 	return 0;
 }
